@@ -2,7 +2,7 @@ import java.awt.*;
 
 public abstract class Enemy {
     protected int x, y, width, height;
-    protected static final int SPEED = 2;
+    protected static final float SPEED = 1.5f; // Reduced speed for easier dodging
     
     public Enemy(int x, int y, int width, int height) {
         this.x = x;
@@ -12,6 +12,7 @@ public abstract class Enemy {
     }
     
     public abstract void update(Player player);
+    public abstract void update(Player player, float speedMultiplier);
     public abstract void render(Graphics2D g2d);
     
     public Rectangle getBounds() {

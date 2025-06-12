@@ -2,24 +2,28 @@ import java.awt.*;
 
 public class HunterBot extends Enemy {
     private int targetY;
-    private static final int TRACKING_SPEED = 1;
+    private static final float TRACKING_SPEED = 0.7f; // Reduced tracking speed
     
     public HunterBot(int x, int y) {
         super(x, y, 35, 20);
         this.targetY = y;
     }
+      @Override
+    public void update(Player player) {
+        // Default speed
+        update(player, 1.0f);
+    }
     
     @Override
-    public void update(Player player) {
+    public void update(Player player, float speedMultiplier) {
         // Move left
-        x -= SPEED;
-        
-        // Slowly track player's Y position
+        x -= SPEED * speedMultiplier;
+          // Slowly track player's Y position
         targetY = player.getY();
         if (y < targetY) {
-            y += TRACKING_SPEED;
+            y += TRACKING_SPEED * speedMultiplier;
         } else if (y > targetY) {
-            y -= TRACKING_SPEED;
+            y -= TRACKING_SPEED * speedMultiplier;
         }
     }
     

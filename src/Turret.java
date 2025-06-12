@@ -11,11 +11,21 @@ public class Turret extends Enemy {
         this.fireTimer = 0;
         this.charging = false;
     }
+      // Target Y position for aiming
+    private int targetY;
+      @Override
+    public void update(Player player) {
+        // Default speed
+        update(player, 1.0f);
+    }
     
     @Override
-    public void update(Player player) {
+    public void update(Player player, float speedMultiplier) {
         // Move left
-        x -= SPEED;
+        x -= SPEED * speedMultiplier;
+        
+        // Calculate target Y for aiming at the player
+        targetY = player.getY() + player.getHeight() / 2;
         
         // Fire timer
         fireTimer++;
@@ -69,12 +79,19 @@ public class Turret extends Enemy {
         // Status light
         g2d.setColor(charging ? Color.RED : Color.GREEN);
         g2d.fillOval(x + width/2 - 2, y + 5, 4, 4);
-        
-        // Warning beam when charging
+          // Warning beam when charging - aim at player's position
         if (charging) {
             g2d.setStroke(new BasicStroke(2));
             g2d.setColor(new Color(255, 0, 0, 100));
-            g2d.drawLine(x - 15, y + 11, x - 200, y + 11);
+            
+            // Calculate angle to target
+            double angle = Math.atan2(targetY - (y + 11), -200);
+            int beamLength = 200;
+            int endX = x - 15 - (int)(Math.cos(angle) * beamLength);
+            int endY = y + 11 + (int)(Math.sin(angle) * beamLength);
+            
+            // Draw aimed laser beam
+            g2d.drawLine(x - 15, y + 11, endX, endY);
         }
     }
 }

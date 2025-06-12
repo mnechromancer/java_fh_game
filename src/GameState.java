@@ -20,6 +20,11 @@ public class GameState {
     private int enemySpawnTimer;
     private int powerUpSpawnTimer;
     
+    // Game speed progression
+    private float gameSpeedMultiplier;
+    private static final float SPEED_INCREMENT = 0.0005f; // Gradual speed increase per frame
+    private static final float MAX_SPEED_MULTIPLIER = 2.0f;
+    
     private static final int PANEL_WIDTH = 800;
     private static final int PANEL_HEIGHT = 600;
     
@@ -42,6 +47,8 @@ public class GameState {
         obstacleSpawnTimer = 0;
         enemySpawnTimer = 0;
         powerUpSpawnTimer = 0;
+        
+        gameSpeedMultiplier = 1.0f;
     }
     
     public void handleMouseClick() {
@@ -65,10 +72,10 @@ public class GameState {
         
         // Update player
         player.update();
-        
-        // Check if player is out of bounds
+          // Check if player is out of bounds
         if (player.getY() < 0 || player.getY() > PANEL_HEIGHT) {
-            player.takeDamage();
+            // Always take damage when out of bounds, even if invincible
+            player.takeDamageFromBoundary();
             particles.addExplosion(player.getX(), player.getY());
         }
         
@@ -95,9 +102,14 @@ public class GameState {
                 saveHighScore();
             }
         }
-        
-        // Increment score based on survival time
+          // Increment score based on survival time
         score += 1;
+        
+        // Update game speed based on score - increase gradually every frame
+        gameSpeedMultiplier += SPEED_INCREMENT;
+        if (gameSpeedMultiplier > MAX_SPEED_MULTIPLIER) {
+            gameSpeedMultiplier = MAX_SPEED_MULTIPLIER;
+        }
     }
     
     private void updateObstacles() {
@@ -108,12 +120,11 @@ public class GameState {
             obstacles.add(new Obstacle(PANEL_WIDTH, PANEL_HEIGHT));
             obstacleSpawnTimer = 0;
         }
-        
-        // Update existing obstacles
+          // Update existing obstacles
         Iterator<Obstacle> obsIter = obstacles.iterator();
         while (obsIter.hasNext()) {
             Obstacle obs = obsIter.next();
-            obs.update();
+            obs.update(gameSpeedMultiplier); // Pass speed multiplier
             
             // Remove off-screen obstacles and award points
             if (obs.getX() + obs.getWidth() < 0) {
@@ -127,27 +138,28 @@ public class GameState {
         enemySpawnTimer++;
         
         // Spawn enemies less frequently than obstacles
-        if (enemySpawnTimer >= 180) { // Every 3 seconds
+        if (enemySpawnTimer >= 180) { // Every 3 seconds            // Get a safe Y position for spawning
+            int safeY = findSafeYPosition();
+            
             int enemyType = (int)(Math.random() * 3);
             switch (enemyType) {
                 case 0:
-                    enemies.add(new SecurityDrone(PANEL_WIDTH, (int)(Math.random() * PANEL_HEIGHT)));
+                    enemies.add(new SecurityDrone(PANEL_WIDTH, safeY));
                     break;
                 case 1:
-                    enemies.add(new HunterBot(PANEL_WIDTH, (int)(Math.random() * PANEL_HEIGHT)));
+                    enemies.add(new HunterBot(PANEL_WIDTH, safeY));
                     break;
                 case 2:
-                    enemies.add(new Turret(PANEL_WIDTH, (int)(Math.random() * PANEL_HEIGHT)));
+                    enemies.add(new Turret(PANEL_WIDTH, safeY));
                     break;
             }
             enemySpawnTimer = 0;
         }
-        
-        // Update existing enemies
+          // Update existing enemies
         Iterator<Enemy> enemyIter = enemies.iterator();
         while (enemyIter.hasNext()) {
             Enemy enemy = enemyIter.next();
-            enemy.update(player);
+            enemy.update(player, gameSpeedMultiplier); // Pass speed multiplier
             
             // Remove off-screen enemies
             if (enemy.getX() + enemy.getWidth() < 0) {
@@ -160,18 +172,19 @@ public class GameState {
         powerUpSpawnTimer++;
         
         // Spawn power-ups rarely
-        if (powerUpSpawnTimer >= 300) { // Every 5 seconds
+        if (powerUpSpawnTimer >= 300) { // Every 5 seconds            // Get a safe Y position for spawning
+            int safeY = findSafeYPosition();
+            
             PowerUp.PowerUpType type = Math.random() < 0.5 ? 
                 PowerUp.PowerUpType.ROCKET_BOOST : PowerUp.PowerUpType.DATA_PACK;
-            powerUps.add(new PowerUp(PANEL_WIDTH, (int)(Math.random() * PANEL_HEIGHT), type));
+            powerUps.add(new PowerUp(PANEL_WIDTH, safeY, type));
             powerUpSpawnTimer = 0;
         }
-        
-        // Update existing power-ups
+          // Update existing power-ups
         Iterator<PowerUp> powerUpIter = powerUps.iterator();
         while (powerUpIter.hasNext()) {
             PowerUp powerUp = powerUpIter.next();
-            powerUp.update();
+            powerUp.update(gameSpeedMultiplier); // Pass speed multiplier
             
             // Remove off-screen power-ups
             if (powerUp.getX() + powerUp.getWidth() < 0) {
@@ -330,5 +343,37 @@ public class GameState {
         String instructText = "Click to thrust and start game";
         x = (PANEL_WIDTH - fm.stringWidth(instructText)) / 2;
         g2d.drawString(instructText, x, PANEL_HEIGHT / 2 + 50);
+    }
+    
+    // Find a safe Y position that doesn't conflict with obstacles
+    private int findSafeYPosition() {
+        // If there are no obstacles, any position is fine
+        if (obstacles.isEmpty()) {
+            return (int)(Math.random() * (PANEL_HEIGHT - 100)) + 50; // Stay away from edges
+        }
+        
+        // Find the closest obstacle to the right edge (spawn point)
+        Obstacle closestObstacle = null;
+        int minDistance = Integer.MAX_VALUE;
+        
+        for (Obstacle obs : obstacles) {
+            int distance = PANEL_WIDTH - obs.getX();
+            if (distance > 0 && distance < minDistance) {
+                minDistance = distance;
+                closestObstacle = obs;
+            }
+        }
+        
+        // If no relevant obstacle is found, return random position
+        if (closestObstacle == null) {
+            return (int)(Math.random() * (PANEL_HEIGHT - 100)) + 50;
+        }
+        
+        // Find safe zone (in the gap of the obstacle)
+        int gapY = closestObstacle.getGapY();
+        int gapHeight = closestObstacle.getGapHeight();
+        
+        // Return a position in the middle of the gap
+        return gapY + (int)(Math.random() * (gapHeight - 40)) + 20;
     }
 }

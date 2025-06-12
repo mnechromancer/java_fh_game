@@ -19,9 +19,12 @@ public class PowerUp {
         this.height = 20;
         this.pulseAngle = 0;
     }
+      public void update() {
+        update(1.0f);
+    }
     
-    public void update() {
-        x -= SPEED;
+    public void update(float speedMultiplier) {
+        x -= SPEED * speedMultiplier;
         pulseAngle = (pulseAngle + 0.2) % (2 * Math.PI); // For pulsing effect, reset periodically
     }
     

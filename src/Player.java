@@ -54,9 +54,17 @@ public class Player {
     public void thrust() {
         velocityY = THRUST_POWER;
     }
-    
-    public void takeDamage() {
+      public void takeDamage() {
         if (!invulnerable && !boosted) {
+            health--;
+            invulnerable = true;
+            invulnerabilityTimer = INVULNERABILITY_TIME;
+        }
+    }
+    
+    public void takeDamageFromBoundary() {
+        // Always take damage from boundaries, even with boosts
+        if (!invulnerable) {
             health--;
             invulnerable = true;
             invulnerabilityTimer = INVULNERABILITY_TIME;

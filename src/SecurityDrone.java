@@ -9,11 +9,16 @@ public class SecurityDrone extends Enemy {
         this.angle = 0;
         this.oscillationOffset = (int)(Math.random() * 100);
     }
+      @Override
+    public void update(Player player) {
+        // Default speed
+        update(player, 1.0f);
+    }
     
     @Override
-    public void update(Player player) {
+    public void update(Player player, float speedMultiplier) {
         // Move left
-        x -= SPEED;
+        x -= SPEED * speedMultiplier;
         
         // Add slight vertical oscillation
         angle += 0.1;

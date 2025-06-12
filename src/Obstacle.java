@@ -4,25 +4,34 @@ public class Obstacle {
     private int x, y;
     private int width, height;
     private int gapY, gapHeight;
-    private static final int SPEED = 3;
-    private static final int MIN_GAP_HEIGHT = 120;
-    private static final int MAX_GAP_HEIGHT = 180;
+    private static final int SPEED = 3;    private static final int MIN_GAP_HEIGHT = 150; // Increased for better visibility
+    private static final int MAX_GAP_HEIGHT = 200;
     
     public Obstacle(int startX, int screenHeight) {
         this.x = startX;
         this.width = 40;
-        
-        // Create a gap in the middle of the screen
+          // Create a gap in the middle of the screen
         this.gapHeight = MIN_GAP_HEIGHT + (int)(Math.random() * (MAX_GAP_HEIGHT - MIN_GAP_HEIGHT));
-        this.gapY = 100 + (int)(Math.random() * (screenHeight - gapHeight - 200));
+        
+        // Ensure minimum vertical space for gaps
+        int minTopHeight = 80;  // Minimum height of top building
+        int minBottomHeight = 80;  // Minimum height of bottom building
+        int maxGapY = screenHeight - gapHeight - minBottomHeight;
+        int minGapY = minTopHeight;
+        
+        // Ensure gap is within reasonable bounds
+        this.gapY = minGapY + (int)(Math.random() * (maxGapY - minGapY));
         
         // Total height spans the screen
         this.height = screenHeight;
         this.y = 0;
     }
-    
-    public void update() {
+      public void update() {
         x -= SPEED;
+    }
+    
+    public void update(float speedMultiplier) {
+        x -= SPEED * speedMultiplier;
     }
     
     public void render(Graphics2D g2d) {
@@ -92,10 +101,11 @@ public class Obstacle {
         
         return false;
     }
-    
-    // Getters
+      // Getters
     public int getX() { return x; }
     public int getY() { return y; }
     public int getWidth() { return width; }
     public int getHeight() { return height; }
+    public int getGapY() { return gapY; }
+    public int getGapHeight() { return gapHeight; }
 }
